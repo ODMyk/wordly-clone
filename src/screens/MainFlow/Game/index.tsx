@@ -40,14 +40,24 @@ export default function GameScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const wordResponse = await fetch(
-          'https://random-word-api.herokuapp.com/word?number=1&length=6',
-        );
-        if (!wordResponse.ok) {
-          return;
+        // TODO found an API that allows both generate random word and check a word for existence
+        while (true) {
+          const wordResponse = await fetch(
+            'https://random-word-api.herokuapp.com/word?number=1&length=6',
+          );
+          if (!wordResponse.ok) {
+            return;
+          }
+          const fetchedWord = (await wordResponse.json())[0];
+          const checkResponse = await fetch(
+            `https://api.dictionaryapi.dev/api/v2/entries/en/${fetchedWord}`,
+          );
+          if (checkResponse.ok) {
+            setWord(fetchedWord);
+            // console.log(fetchedWord);
+            break;
+          }
         }
-        const word = (await wordResponse.json())[0];
-        setWord(word);
       } catch {
         return;
       }
