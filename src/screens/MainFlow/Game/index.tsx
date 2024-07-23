@@ -5,6 +5,8 @@ import {MainStackParamList} from '@navigation/Router';
 import {useStyles} from './styles';
 import {MAX_ATTEMPTS_COUNT} from 'src/constants/maxAttemptsCount';
 import Word from '@components/Word';
+import {proceedGame} from '@store/modules/AppCommon/reducer';
+import {useDispatch} from 'react-redux';
 
 export default function GameScreen() {
   const {navigate} = useNavigation<NavigationProp<MainStackParamList>>();
@@ -20,6 +22,7 @@ export default function GameScreen() {
   const [word, setWord] = useState('');
   const [attemptsCount, setAttemptsCount] = useState(0);
   const inputRef = useRef<TextInput>(null);
+  const dispatch = useDispatch();
 
   const handleBack = () => {
     navigate('Home');
@@ -27,6 +30,7 @@ export default function GameScreen() {
 
   const handleGiveUp = () => {
     setGameOver(true);
+    saveGame();
   };
 
   const handleInputPress = () => {
@@ -54,7 +58,7 @@ export default function GameScreen() {
           );
           if (checkResponse.ok) {
             setWord(fetchedWord);
-            // console.log(fetchedWord);
+            console.log(fetchedWord);
             break;
           }
         }
@@ -74,6 +78,10 @@ export default function GameScreen() {
     };
   }, []);
 
+  const saveGame = () => {
+    dispatch(proceedGame({attempts: attemptsCount + 1, isWin: word === input}));
+  };
+
   const handleSubmit = async () => {
     if (input.length !== 6) {
       return;
@@ -91,6 +99,7 @@ export default function GameScreen() {
             : g,
         ),
       );
+      saveGame();
       setAttemptsCount(attemptsCount + 1);
       setGameOver(true);
       return;
@@ -109,6 +118,7 @@ export default function GameScreen() {
 
     if (attemptsCount + 1 === MAX_ATTEMPTS_COUNT) {
       setGameOver(true);
+      saveGame();
     }
 
     const guess = Array.from(input);
