@@ -164,7 +164,7 @@ export default function GameScreen() {
     }
 
     for (let i = 0; i < word.length; ++i) {
-      if (wordCopy[i] === '+') {
+      if (guess[i] === '-') {
         continue;
       }
       if (wordCopy.includes(input[i])) {
