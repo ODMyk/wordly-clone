@@ -4,25 +4,55 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainStackParamList} from '@navigation/Router';
 import {useStyles} from './styles';
 import {MAX_ATTEMPTS_COUNT} from 'src/constants/maxAttemptsCount';
-import Word from '@components/Word';
+import Word, {WordProps} from '@components/Word';
 import {proceedGame} from '@store/modules/AppCommon/reducer';
 import {useDispatch} from 'react-redux';
+import {trigger} from 'react-native-haptic-feedback';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import {EmptyWord} from '@components/EmptyWord';
+
+const SHAKE_OFFSET = '5deg';
+const SHAKE_DURATION = 30;
 
 export default function GameScreen() {
   const {navigate} = useNavigation<NavigationProp<MainStackParamList>>();
   const styles = useStyles();
   const [input, setInput] = useState('');
   const [isGameOver, setGameOver] = useState(false);
-  const [guesses, setGuesses] = useState(
-    Array.from({length: MAX_ATTEMPTS_COUNT}).map(_ => ({
-      word: '      ',
-      styles: Array.from({length: 6}).map(_ => styles.wrongLetter),
-    })),
-  );
+  const [guesses, setGuesses] = useState<WordProps[]>([]);
   const [word, setWord] = useState('');
   const [attemptsCount, setAttemptsCount] = useState(0);
   const inputRef = useRef<TextInput>(null);
   const dispatch = useDispatch();
+
+  const inputRotation = useSharedValue('0deg');
+  const animatedInputStyle = useAnimatedStyle(() => ({
+    transform: [{rotateZ: inputRotation.value.toString()}],
+  }));
+
+  const shakeInput = () => {
+    inputRotation.value = withRepeat(
+      withSequence(
+        withTiming('-' + SHAKE_OFFSET, {duration: SHAKE_DURATION}),
+        withTiming('0deg', {duration: SHAKE_DURATION}),
+        withTiming(SHAKE_OFFSET, {duration: SHAKE_DURATION}),
+        withTiming('0deg', {duration: SHAKE_DURATION}),
+      ),
+      2,
+    );
+  };
+
+  const handleIncorrectSubmit = () => {
+    setInput('');
+    shakeInput();
+    trigger('notificationError');
+  };
 
   const handleBack = () => {
     navigate('Home');
@@ -84,6 +114,7 @@ export default function GameScreen() {
 
   const handleSubmit = async () => {
     if (input.length !== 6) {
+      handleIncorrectSubmit();
       return;
     }
 
@@ -92,13 +123,10 @@ export default function GameScreen() {
         _ => styles.exactLetter,
       );
 
-      setGuesses(
-        guesses.map((g, i) =>
-          i === attemptsCount
-            ? {word: input.toUpperCase(), styles: letterColors}
-            : g,
-        ),
-      );
+      setGuesses([
+        ...guesses,
+        {word: input.toLocaleUpperCase(), letterStyles: letterColors},
+      ]);
       saveGame();
       setAttemptsCount(attemptsCount + 1);
       setGameOver(true);
@@ -110,6 +138,7 @@ export default function GameScreen() {
         `https://api.dictionaryapi.dev/api/v2/entries/en/${input}`,
       );
       if (!checkResponse.ok) {
+        handleIncorrectSubmit();
         return;
       }
     } catch (err) {
@@ -145,13 +174,10 @@ export default function GameScreen() {
       }
     }
 
-    setGuesses(
-      guesses.map((g, i) =>
-        i === attemptsCount
-          ? {word: input.toUpperCase(), styles: letterColors}
-          : g,
-      ),
-    );
+    setGuesses([
+      ...guesses,
+      {word: input.toLocaleUpperCase(), letterStyles: letterColors},
+    ]);
     setInput('');
     setAttemptsCount(attemptsCount + 1);
   };
@@ -179,7 +205,10 @@ export default function GameScreen() {
 
       <View style={styles.guessesContainer}>
         {guesses.map((g, i) => (
-          <Word word={g.word} letterStyles={g.styles} key={i} />
+          <Word word={g.word} letterStyles={g.letterStyles} key={i} />
+        ))}
+        {Array.from({length: 6 - attemptsCount}).map((_, i) => (
+          <EmptyWord key={i} />
         ))}
       </View>
 
@@ -199,7 +228,7 @@ export default function GameScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.inputContainer}>
+            <Animated.View style={[styles.inputContainer, animatedInputStyle]}>
               <TouchableOpacity
                 onPress={handleInputPress}
                 style={styles.inputWrapper}
@@ -217,7 +246,7 @@ export default function GameScreen() {
                   <Text style={styles.inputText}>{input}</Text>
                 </View>
               </TouchableOpacity>
-            </View>
+            </Animated.View>
           )}
         </View>
       )}
