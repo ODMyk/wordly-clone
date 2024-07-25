@@ -1,7 +1,7 @@
 import {WordProps} from '@components/Word';
 import {MainStackParamList} from '@navigation/Router';
 import {useNavigation, NavigationProp} from '@react-navigation/native';
-import {proceedGame} from '@store/modules/AppCommon/reducer';
+import {proceedGame} from '@store/modules/GameState/reducer';
 import {useState, useRef, useEffect} from 'react';
 import {TextInput, Keyboard} from 'react-native';
 import {trigger} from 'react-native-haptic-feedback';
@@ -14,7 +14,7 @@ import {
 } from 'react-native-reanimated';
 import {useDispatch} from 'react-redux';
 import {MAX_ATTEMPTS_COUNT} from 'src/constants/maxAttemptsCount';
-import {useStyles} from './styles';
+import {useStyles} from '../screens/MainFlow/Game/styles';
 
 const SHAKE_OFFSET = '5deg';
 const SHAKE_DURATION = 30;
@@ -34,7 +34,7 @@ export const useGame = () => {
 
   const inputRotation = useSharedValue('0deg');
   const animatedInputStyle = useAnimatedStyle(() => ({
-    transform: [{rotateZ: inputRotation.value.toString()}],
+    transform: [{rotateZ: inputRotation.value}],
   }));
 
   const shakeInput = () => {
@@ -68,6 +68,7 @@ export const useGame = () => {
     if (Keyboard.isVisible()) {
       return;
     }
+    Keyboard.dismiss();
     inputRef.current?.blur();
     inputRef.current?.focus();
   };
@@ -103,7 +104,7 @@ export const useGame = () => {
     );
 
     return () => {
-      keyboardDidHideListener.remove();
+      Keyboard.removeAllListeners('keyboardDidHide');
     };
   }, []);
 

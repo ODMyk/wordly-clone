@@ -5,14 +5,22 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useStyles} from './styles';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {statsSelector} from '@store/modules/AppCommon/selectors';
+import {statsSelector} from '@store/modules/GameState/selectors';
+import Animated, {
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import {transform} from '@babel/core';
 
 export default function HomeScreen() {
   const {navigate} = useNavigation<NavigationProp<MainStackParamList>>();
   const styles = useStyles();
   const stats = useSelector(statsSelector);
+  const scale = useSharedValue(1);
 
   const handlePress = () => {
+    scale.value = withSequence(withTiming(0.92, {duration: 50}), withTiming(1));
     navigate('Game');
   };
 
@@ -31,11 +39,11 @@ export default function HomeScreen() {
             {stats.leastAttempts > 0 ? stats.leastAttempts : 'N/A'}
           </Text>
         </View>
-        <View style={styles.buttonContainer}>
+        <Animated.View style={[styles.buttonContainer, {transform: [{scale}]}]}>
           <TouchableOpacity style={styles.button} onPress={handlePress}>
             <Text style={styles.buttonText}>PLAY</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );

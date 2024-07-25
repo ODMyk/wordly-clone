@@ -1,10 +1,16 @@
-import {View, Text, TextInput, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import React from 'react';
 import {MAX_ATTEMPTS_COUNT} from 'src/constants/maxAttemptsCount';
 import Word from '@components/Word';
 import Animated from 'react-native-reanimated';
 import {EmptyWord} from '@components/EmptyWord';
-import {useGame} from './useGame';
+import {useGame} from '../../../hooks/useGame';
 
 export default function GameScreen() {
   const {

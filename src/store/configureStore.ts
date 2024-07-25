@@ -19,7 +19,10 @@ const persistConfig = {
   whitelist: [],
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(
+  persistConfig,
+  rootReducer as unknown as Reducer,
+);
 
 export const store = configureStore({
   reducer: persistedReducer,
