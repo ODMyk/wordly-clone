@@ -18,6 +18,9 @@ import {useStyles} from './styles';
 
 const SHAKE_OFFSET = '5deg';
 const SHAKE_DURATION = 30;
+const RANDOM_WORD_API =
+  'https://random-word.ryanrk.com/api/en/word/random/?length=6';
+const DICTIONARY_API = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
 export const useGame = () => {
   const {navigate} = useNavigation<NavigationProp<MainStackParamList>>();
@@ -74,16 +77,14 @@ export const useGame = () => {
       try {
         // TODO find an API that allows both generate random word and check a word for existence
         while (true) {
-          const wordResponse = await fetch(
-            'https://random-word-api.herokuapp.com/word?number=1&length=6',
-          );
+          const wordResponse = await fetch(RANDOM_WORD_API);
           if (!wordResponse.ok) {
             return;
           }
-          const fetchedWord = (await wordResponse.json())[0];
-          const checkResponse = await fetch(
-            `https://api.dictionaryapi.dev/api/v2/entries/en/${fetchedWord}`,
-          );
+          const fetchedWord = (
+            await wordResponse.json()
+          )[0].toLocaleLowerCase();
+          const checkResponse = await fetch(`${DICTIONARY_API}/${fetchedWord}`);
           if (checkResponse.ok) {
             setWord(fetchedWord);
             console.log(fetchedWord);
@@ -133,9 +134,7 @@ export const useGame = () => {
     }
 
     try {
-      const checkResponse = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${input}`,
-      );
+      const checkResponse = await fetch(`${DICTIONARY_API}/${input}`);
       if (!checkResponse.ok) {
         handleIncorrectSubmit();
         return;
